@@ -31,8 +31,10 @@ def participant(request=None, session=None, user=None):
 
 
 def clear_participant_cache(request):
-    if hasattr(request, '_experiments_user'):
+    try:
         del request._experiments_user
+    except AttributeError:
+        pass
 
 
 def _get_participant(request, session, user):
