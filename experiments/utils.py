@@ -45,7 +45,7 @@ def _get_participant(request, session, user):
 
     if request and conf.BOT_REGEX.search(request.META.get("HTTP_USER_AGENT", "")):
         return DummyUser()
-    elif user and user.is_authenticated():
+    elif user and user.is_authenticated:
         if getattr(user, 'is_confirmed_human', True):
             return AuthenticatedUser(user, request)
         else:
@@ -302,7 +302,7 @@ class AuthenticatedUser(WebUser):
         user_enrolled.send(self, experiment=experiment.name, alternative=alternative, user=self.user, session=None)
 
     def _participant_identifier(self):
-        return 'user:%d' % (self.user.pk, )
+        return 'user:%s' % (self.user.pk, )
 
     def _get_all_enrollments(self):
         enrollments = Enrollment.objects.filter(user=self.user).select_related("experiment")
@@ -402,7 +402,7 @@ class SessionUser(WebUser):
     def _get_all_enrollments(self):
         enrollments = self.session.get('experiments_enrollments', None)
         if enrollments:
-            for experiment_name, data in enrollments.items():
+            for experiment_name, data in list(enrollments.items()):
                 alternative, _, enrollment_date, last_seen = _session_enrollment_latest_version(data)
                 experiment = experiment_manager.get_experiment(experiment_name)
                 if experiment:
