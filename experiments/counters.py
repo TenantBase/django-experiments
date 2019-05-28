@@ -3,7 +3,7 @@ from django.utils.functional import cached_property
 
 import redis
 from redis.sentinel import Sentinel
-from redis.exceptions import ConnectionError, ResponseError
+from redis.exceptions import ConnectionError, DataError, ResponseError
 
 
 COUNTER_CACHE_KEY = 'experiments:participants:%s'
@@ -39,7 +39,7 @@ class Counters(object):
             if new_value > count:
                 self._redis.hincrby(freq_cache_key, new_value - count, -1)
             self._redis.hincrby(freq_cache_key, new_value, 1)
-        except (ConnectionError, ResponseError):
+        except (ConnectionError, DataError, ResponseError):
             # Handle Redis failures gracefully
             pass
 
@@ -53,7 +53,7 @@ class Counters(object):
             # Remove from the histogram
             freq_cache_key = COUNTER_FREQ_CACHE_KEY % key
             self._redis.hincrby(freq_cache_key, freq, -1)
-        except (ConnectionError, ResponseError):
+        except (ConnectionError, DataError, ResponseError):
             # Handle Redis failures gracefully
             pass
 
@@ -61,7 +61,7 @@ class Counters(object):
         try:
             cache_key = COUNTER_CACHE_KEY % key
             return self._redis.hlen(cache_key)
-        except (ConnectionError, ResponseError):
+        except (ConnectionError, DataError, ResponseError):
             # Handle Redis failures gracefully
             return 0
 
@@ -70,7 +70,7 @@ class Counters(object):
             cache_key = COUNTER_CACHE_KEY % key
             freq = self._redis.hget(cache_key, participant_identifier)
             return int(freq) if freq else 0
-        except (ConnectionError, ResponseError):
+        except (ConnectionError, DataError, ResponseError):
             # Handle Redis failures gracefully
             return 0
 
@@ -82,7 +82,7 @@ class Counters(object):
             # as they shouldn't really affect the result, and they are about to become
             # zero anyway.
             return dict((int(k), int(v)) for (k, v) in self._redis.hgetall(freq_cache_key).items() if int(v) > 0)
-        except (ConnectionError, ResponseError):
+        except (ConnectionError, DataError, ResponseError):
             # Handle Redis failures gracefully
             return tuple()
 
@@ -93,7 +93,7 @@ class Counters(object):
             freq_cache_key = COUNTER_FREQ_CACHE_KEY % key
             self._redis.delete(freq_cache_key)
             return True
-        except (ConnectionError, ResponseError):
+        except (ConnectionError, DataError, ResponseError):
             # Handle Redis failures gracefully
             return False
 
@@ -107,6 +107,6 @@ class Counters(object):
             for key in self._redis.keys(freq_cache_key):
                 self._redis.delete(key)
             return True
-        except (ConnectionError, ResponseError):
+        except (ConnectionError, DataError, ResponseError):
             # Handle Redis failures gracefully
             return False
