@@ -50,6 +50,10 @@ class Counters(object):
             pipe = self._redis.pipeline()
             freq, _ = pipe.hget(cache_key, participant_identifier).hdel(cache_key, participant_identifier).execute()
 
+            # Handle cases where the cache_key isn't found gracefully.
+            if freq is None:
+                return
+
             # Remove from the histogram
             freq_cache_key = COUNTER_FREQ_CACHE_KEY % key
             self._redis.hincrby(freq_cache_key, freq, -1)
